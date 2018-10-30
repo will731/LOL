@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+{% load ygol_filter_tag %}
+
+{% block header_content %}
+<style>
+.center {
+ width: auto;
+ display: table;
+ margin-left: auto;
+ margin-right: auto;
+}
+.text-center > table > tbody > tr > th,
+.text-center > table > thead > tr > th {
+ text-align: center;
+}
+
+.table-responsive {
+width: 100%;
+margin-bottom: 15px;
+overflow-x: scroll;
+overflow-y: hidden;
+border: 1px solid #dddddd;
+-ms-overflow-style: -ms-autohiding-scrollbar;
+-webkit-overflow-scrolling: touch;
+}
+.table-responsive > .table {
+margin-bottom: 0;
+}
+.table-responsive > .table > thead > tr > th,
+.table-responsive > .table > tbody > tr > th,
+.table-responsive > .table > tfoot > tr > th,
+.table-responsive > .table > thead > tr > td,
+.table-responsive > .table > tbody > tr > td,
+.table-responsive > .table > tfoot > tr > td {
+white-space: nowrap;
+}
+
+
+.NoNewline
+{
+word-break: keep-all;/*必须*/
+white-space: nowrap;
+}
+
+
+.ace_editor.fullScreen {
+    height: auto !important;
+    width: auto;
+    border: 0;
+    margin: 0;
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+}
+
+.fullScreen {
+    overflow: hidden
+}
+
+.editor {
+    margin: 0;
+    position: relative;
+    height: 400px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.oneline {
+    width:100px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.pointer{
+cursor:pointer;
+}
+</style>
+	<!-- Datepicker -->
+    <link href="/static/template/css/bootstrap-datepicker.min.css" rel="stylesheet"/>
+    <link href="/static/template/css/chosen/chosen.min.css" rel="stylesheet"/>
+{% endblock %}
+
+
+{% block container %}
+<div id="main-container">
+    <div id="breadcrumb">
+        <ul class="breadcrumb">
+             <li><i class="fa fa-home"></i><a href="/"> Home</a></li>
+             <li>作业执行历史</li>
+             <li>作业实例</li>
+             <li class="active">作业步骤实例</li>
+        </ul>
+    </div><!--breadcrumb-->
+
+    <div class="padding-md">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <div class="col-md-4">
+                                    <strong>节点名称： </strong><span id="ordName"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>执行结果： </strong><span id="ordStatus" class="label"></span>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>启动人： </strong><span id="operator"></span>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>节点类型： </strong><span id="type"></span>
+                                </div>
+                            </div>
+                        </form>
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <div class="col-md-4">
+                                    <strong>开始时间： </strong><span id="startTime"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>结束时间： </strong><span id="endTime"></span>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>总耗时 (s)： </strong><span id="totalTime"></span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                    </div>
+                    <div class="panel-tab clearfix">
+                        <ul class="tab-bar">
+                            <li class="active"><a href="#ipList" data-toggle="tab"><i class="fa fa-search"></i> 执行日志</a></li>
+                            <li><a href="#nm_step" data-toggle="tab"><i class="fa fa-laptop"></i> 步骤详情</a></li>
+                        </ul>
+                    </div>
+                    <div class="panel-body">
+                        <div class="tab-content">
+                            <div class="tab-pane fade in active" id="ipList">
+                                <table class="table table-hover table-bordered NoNewline" data-name="serverInfo"></table>
+                                <div class="col-lg-12">
+                                    <select class="form-inline" name="font"></select>
+                                    <label class="label-radio inline">
+                                        字体
+                                    </label>
+                                    <label class="label-radio inline">
+                                        ESC键退出全屏
+                                    </label>
+                                    <button type="button" name="fullScreen" class="btn btn-default btn-xs">
+                                        <i class="fa fa-crosshairs"></i> 全屏
+                                    </button>
+                                    <pre id="editorLog" class="editor"></pre>
+                                </div><!-- /.col -->
+                            </div>
+                            <div class="tab-pane fade col-md-10" id="nm_step">
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /panel -->
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+	</div><!-- /padding-md -->
+</div><!-- /main-container -->
+{% include 'log_record/ordTemplate.html' %}
+
+{% endblock %}
+
+{% block footer_content %}
+
+
+<!-- Datepicker -->
+<script src='/static/template/js/bootstrap-datepicker.js'></script>
+<script src='/static/template/js/bootstrap-datepicker.zh-CN.min.js'></script>
+<script src='/static/template/js/chosen.jquery.min.js'></script>
+<script src="/static/plugins/ace/ace.js"></script>
+<script src="/static/plugins/ace/ext-themelist.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/plugins/ace/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/lol.js" type="text/javascript" charset="utf-8"></script>
+<script>
+$(document).ready(function(){
+    // 在这里写你的代码...
+    initOrdTable($("table[data-name='serverInfo']"));
+    initEditorAction($('#editorLog'));
+    initFont($("#ipList").find("select[name='font']"));
+    loadTaskStepInstance()
+});
+
+
+/**
+ * 初始化节点表格
+ */
+function initOrdTable($table) {
+    $table.bootstrapTable({
+        pagination: true,                   //是否显示分页（*）
+        sortable: false,                     //是否启用排序
+        sortOrder: "asc",                   //排序方式
+        showColumns: true,
+        showRefresh: true,
+        clickToSelect: true,
+        uniqueId: "id",
+        sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+        pageNumber: 1,                       //初始化加载第一页，默认第一页
+        pageSize: 5,                       //每页的记录行数（*）
+        pageList: [10, 25, 50, 100],        //可供选择的每页的行数（*）
+        search: true,                  //是否显示搜索 --前端搜索
+        columns: (function () {
+            var columns = serverColumns();
+            columns.shift();
+            var radio = {field: 'radio', radio: true, formatter : checkedFormatter};
+            columns.unshift(radio);
+            return columns
+        })(),
+        onClickRow: (function (row, $element) {
+            setResult(row);
+        })
+    })
+}
+
+
+/**
+ * 设置默认选中第一行
+ */
+function checkedFormatter(value, row, index) {
+    if (index == 0)
+        return {
+            checked : true//设置选中
+        };
+    return value;
+}
+
+
+/**
+ * 加载作业步骤实例数据 ord
+ */
+function loadTaskStepInstance() {
+    var curl = window.location.href.split('/');
+    var stepId = curl[curl.length - 2];
+    var data = {'stepId': stepId};
+    var url = '/log_record/loadTaskStepInstance/';
+    $.ajax({
+        type: "POST",
+        url: url,
+        data: data,
+        success: function (jres) {
+            var res = $.parseJSON(jres);
+            console.log(res)
+            loadData(res)
+        }
+    })
+}
+
+
+/**
+ * 加载数据
+ */
+function loadData(data) {
+    var nm_step = data.nm_step;
+    $('#ordName').text(nm_step.name);
+    $('#operator').text(nm_step.operator);
+    $('#startTime').text(nm_step.startTime);
+    $('#endTime').text(nm_step.endTime);
+    $('#totalTime').text(nm_step.totalTime);
+    $('#type').text(STEP_TYPE[nm_step.type]);
+    /*状态：1.未执行、2.正在执行、3.执行成功、4.执行失败、5.跳过、6.忽略错误、7.等待用户、
+           8.手动结束、9.状态异常、10.步骤强制终止中、11.步骤强制终止成功、12.步骤强制终止失败*/
+    $('#ordStatus').text(STATUS_TABLE[nm_step.status]);
+    if (nm_step.status == 3){
+        $('#ordStatus').addClass('label-success');
+    }
+    else if (nm_step.status == 4) {
+        $('#ordStatus').addClass('label-danger');
+    }
+    else if (nm_step.status == 2){
+        $('#ordStatus').addClass('label-info');
+        refresh_results();//刷新结果
+    }
+    else{
+        $('#taskStatus').addClass('label-primary');
+    }
+{#    refresh_results();//刷新结果#}
+    //加载服务器信息
+    $("table[data-name='serverInfo']").bootstrapTable('load', data.serverInfo);
+    loadNmStep(data);
+    loadIplist(data.ipList);
+}
+
+
+/**
+ * 加载步骤
+ */
+function loadNmStep(data) {
+    /* nm_step 步骤集合*/
+    var nm_step = data.nm_step;
+    if (nm_step.type==1){
+        loadScriptStep(nm_step);
+    }
+    else if (nm_step.type==2){
+        loadPushFileStep(nm_step);
+    }
+}
+
+/**
+ * 加载脚本节点数据
+ */
+function loadScriptStep(nm_step) {
+    $('#nm_step').append($('#scriptOrdTemplate').html());
+    var $ord = $('#nm_step').children();
+    $ord.find("p[data-name='script']").text(nm_step.name);
+    $ord.find("p[data-name='account']").text(nm_step.account);
+    $ord.find("input[data-name='scriptParam']").val(nm_step.scriptParam);
+    $ord.find("input[data-name='scriptTimeout']").val(nm_step.scriptTimeout);
+    /*设置代码编辑器*/
+    initFont($ord.find("select[name='font']"));
+    var editorId = "blockOrd" + nm_step.blockOrd + '_' + nm_step.ord;
+    $ord.find("pre").attr('id', editorId);
+    initEditorAction($ord.find('pre'));
+    var editor = ace.edit(editorId);
+    editor.setValue(nm_step.scriptContent);
+    if (nm_step.scriptType=='1'){
+        editor.session.setMode("ace/mode/sh");
+    }
+    else {
+        editor.session.setMode("ace/mode/python");
+    }
+    editor.gotoLine(1);
+    editor.setReadOnly(true);
+    /*禁用按钮、输入框*/
+    $ord.find("input[name='script_type']").attr('disabled', 'disabled');
+    $ord.find("input[data-name='scriptParam']").attr('disabled', 'disabled');
+    $ord.find("input[data-name='scriptTimeout']").attr('disabled', 'disabled');
+}
+
+
+/**
+ * 加载传输文件节点数据
+ */
+function loadPushFileStep(nm_step) {
+    $('#nm_step').append($('#fileOrdTemplate').html());
+    var $ord = $('#nm_step').children();
+    $ord.find("p[data-name='account']").text(nm_step.account);
+    $ord.find("input[data-name='scriptTimeout']").val(nm_step.scriptTimeout);
+    $ord.find("input[data-name='fileTargetPath']").val(nm_step.fileTargetPath);
+
+    /*加载文件表格数据*/
+    var $tableSelectedFile = $ord.find("table[data-name='table_selected_file']");
+    initFileTableSelected($tableSelectedFile);
+    $tableSelectedFile.bootstrapTable('append', $.parseJSON(nm_step.fileSource));
+
+    /*禁用按钮、输入框*/
+    $ord.find("input[data-name='scriptTimeout']").attr('disabled', 'disabled');
+    $ord.find("input[data-name='fileTargetPath']").attr('disabled', 'disabled');
+}
+
+
+/**
+ * 加载服务器执行日志
+ */
+function loadIplist(ipList) {
+    var row1 = $("table[data-name='serverInfo']").bootstrapTable('getSelections')[0];
+    $.each(ipList, function (k, v) {
+       if (v.ip == row1.ip){
+           setEditorValue('editorLog', String(v.result));
+       }
+       var resultElement = "<textarea data-ip='"+ v.ip +"'>" + v.result + "</textarea>";
+       $('#result').append(resultElement);
+    });
+}
+
+/**
+ * 点击某行时设置服务器执行日志
+ */
+function setResult(row) {
+    var content = $('#result').find("textarea[data-ip='"+ row.ip +"']").text();
+    setEditorValue('editorLog', content);
+}
+
+
+/**
+ * set editor value
+ */
+function setEditorValue(editorId, content) {
+    var editor = ace.edit(editorId);
+    editor.setValue(content);
+    editor.setShowPrintMargin(false);
+    editor.gotoLine(1);
+    editor.setReadOnly(true);
+}
+
+
+
+
+/**
+ * 刷新结果
+ */
+function refresh_results(){
+    var intervalId=null;
+    function Countdown(){
+        return function(){
+            var curl = window.location.href.split('/');
+            var stepId = curl[curl.length - 2];
+            var data = {'stepId': stepId};
+            var url = '/log_record/loadTaskStepInstance/';
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: data,
+                success: function (jres) {
+                    var res = $.parseJSON(jres);
+                    loadRefreshData(res, intervalId)
+                }
+            });
+        }
+    }
+    intervalId=setInterval(Countdown(),5000);
+}
+
+
+/**
+ * loadRefreshData
+ * 加载刷新的数据
+ */
+function loadRefreshData(data, intervalId){
+    var ipList = data.ipList;
+    var nm_step = data.nm_step;
+    RefreshLog(ipList);
+    console.log(data)
+    /*
+    var STATUS_TABLE = {
+        1:'未执行',
+        2:'正在执行',
+        3:'执行成功',
+        4:'执行失败',
+        5:'跳过',
+        6:'忽略错误',
+        7:'等待用户',
+        8:'手动结束',
+        9:'状态异常',
+        10:'步骤强制终止中',
+        11:'步骤强制终止成功',
+        12:'步骤强制终止失败'
+    };
+    */
+    $('#ordStatus').text(STATUS_TABLE[nm_step.status]);
+    if (nm_step.status == 3){
+        $('#ordStatus').attr('class', 'label label-success');
+        clearInterval(intervalId);
+    }
+    else if (nm_step.status == 4) {
+        $('#ordStatus').attr('class', 'label label-danger');
+        clearInterval(intervalId);
+    }
+    else if (nm_step.status == 2){
+        $('#ordStatus').attr('class', 'label label-info');
+    }
+    else{
+        $('#ordStatus').attr('class', 'label label-primary');
+        clearInterval(intervalId);
+    }
+    $('#endTime').text(nm_step.endTime);
+    $('#totalTime').text(nm_step.totalTime);
+}
+
+/**
+ * 加载刷新的步骤数据
+ */
+function RefreshLog(ipList) {
+    $.each(ipList, function (k, v) {
+        var row1 = $('#ipList').find("table[data-name='serverInfo']").bootstrapTable('getSelections')[0];
+        if (row1.ip == v.ip){//刷新已选服务器执行日志
+            setEditorValue('editorLog', String(v.result));
+        }
+        //刷新隐藏的服务器日志
+        $('#result').find("textarea[data-ip='"+ v.ip +"']").text(v.result);
+    })
+}
+</script>
+{% endblock %}

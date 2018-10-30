@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load ygol_filter_tag %}
+
+{% block header_content %}
+<style>
+.center {
+ width: auto;
+ display: table;
+ margin-left: auto;
+ margin-right: auto;
+}
+.text-center > table > tbody > tr > th,
+.text-center > table > thead > tr > th {
+ text-align: center;
+}
+
+.table-responsive {
+width: 100%;
+margin-bottom: 15px;
+overflow-x: scroll;
+overflow-y: hidden;
+border: 1px solid #dddddd;
+-ms-overflow-style: -ms-autohiding-scrollbar;
+-webkit-overflow-scrolling: touch;
+}
+.table-responsive > .table {
+margin-bottom: 0;
+}
+.table-responsive > .table > thead > tr > th,
+.table-responsive > .table > tbody > tr > th,
+.table-responsive > .table > tfoot > tr > th,
+.table-responsive > .table > thead > tr > td,
+.table-responsive > .table > tbody > tr > td,
+.table-responsive > .table > tfoot > tr > td {
+white-space: nowrap;
+}
+
+
+.NoNewline
+{
+word-break: keep-all;/*必须*/
+white-space: nowrap;
+}
+
+
+.ace_editor.fullScreen {
+    height: auto !important;
+    width: auto;
+    border: 0;
+    margin: 0;
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+}
+
+.fullScreen {
+    overflow: hidden
+}
+
+#editor {
+    margin: 0;
+    position: relative;
+    height: 400px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+
+</style>
+	<!-- Datepicker -->
+    <link href="/static/template/css/bootstrap-datepicker.min.css" rel="stylesheet"/>
+    <link href="/static/template/css/chosen/chosen.min.css" rel="stylesheet"/>
+{% endblock %}
+
+
+{% block container %}
+<div id="main-container">
+    <div id="breadcrumb">
+        <ul class="breadcrumb">
+             <li><i class="fa fa-home"></i><a href="/"> Home</a></li>
+             <li>作业平台</li>
+             <li class="active">快速分发文件</li>
+        </ul>
+    </div><!--breadcrumb-->
+
+	<div class="padding-md">
+        <div class="row">
+            <div class="col-md-10">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <label for="inputEmail1" class="col-lg-2 control-label">任务名称</label>
+                                <div class="col-lg-10">
+                                    <input type="email" class="form-control input-sm" id="task_name" placeholder="name">
+                                </div><!-- /.col -->
+                            </div><!-- /form-group -->
+                            <div class="form-group">
+                                <label for="inputPassword1" class="col-lg-2 control-label">源文件</label>
+                                <div class="col-lg-10">
+                                    <input data-name='file' type="file"  name="file" style="padding-left: 0px;" class="col-lg-4" multiple="multiple">
+                                    <button type="button" data-name="delete_file" class="btn btn-success btn-xs">删除</button>
+                                    <span>（同名文件覆盖，文件大小不要超过500M）</span>
+                                    <div class="table-responsive" id="table_selected_div">
+                                        <table class="table table-hover table-bordered NoNewline" data-name="table_selected_file"></table>
+                                    </div><!-- /.padding-md -->
+                                </div><!-- /.col -->
+                            </div><!-- /form-group -->
+                            <div class="form-group">
+                                <label for="inputPassword1" class="col-lg-2 control-label">目标路径</label>
+                                <div class="col-lg-10">
+                                    <input type="text" class="form-control input-sm" id="fileTargetPath" placeholder="path">
+                                </div><!-- /.col -->
+                            </div><!-- /form-group -->
+                            <div class="form-group">
+                                <label for="inputPassword1" class="col-lg-2 control-label">执行账户</label>
+                                <div class="col-lg-10">
+									<select id="account" class="form-control chzn-select"></select>
+                                </div><!-- /.col -->
+                            </div><!-- /form-group -->
+                            <div class="form-group">
+                                <label for="inputPassword1" class="col-lg-2 control-label">目标机器</label>
+                                <div class="col-lg-10">
+									<button type="button" data-name="add_server" class="btn btn-success btn-sm">选择服务器</button>
+                                    <button type="button" data-name="delete" class="btn btn-success btn-sm">删除</button>
+                                    <div class="table-responsive" id="table_selected_div">
+                                        <table class="table table-hover table-bordered NoNewline" data-name="table_selected"></table>
+                                    </div><!-- /.padding-md -->
+                                </div><!-- /.col -->
+                            </div><!-- /form-group -->
+                            <div class="form-group">
+                                <label for="inputPassword1" class="col-lg-2 control-label">超时时间</label>
+                                <div class="col-lg-10">
+                                    <input type="text" class="form-control input-sm" id="scriptTimeout" placeholder="para" value="1000">
+                                </div><!-- /.col -->
+                            </div><!-- /form-group -->
+                            <div class="form-group">
+                                <div class="col-lg-offset-2 col-lg-10">
+                                    <button type="button" id="run_script" class="btn btn-success btn-sm">run</button>
+                                </div><!-- /.col -->
+                            </div><!-- /form-group -->
+                        </form>
+                    </div>
+                </div><!-- /panel -->
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+	</div><!-- /padding-md -->
+</div><!-- /main-container -->
+<div class="table-responsive hide" id="table_choice_div">
+    <table class="table table-hover table-bordered NoNewline" id="table_choice"></table>
+</div><!-- /.padding-md -->
+
+{% endblock %}
+
+{% block footer_content %}
+
+
+<!-- Datepicker -->
+<script src='/static/template/js/bootstrap-datepicker.js'></script>
+<script src='/static/template/js/bootstrap-datepicker.zh-CN.min.js'></script>
+<script src='/static/template/js/chosen.jquery.min.js'></script>
+<script src="/static/plugins/ace/ace.js"></script>
+<script src="/static/plugins/ace/ext-themelist.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/plugins/ace/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/lol.js" type="text/javascript" charset="utf-8"></script>
+<script>
+$(document).ready(function(){
+  // 在这里写你的代码...
+    init_account($('#account'));
+    initTableSelected($('#main-container').find("table[data-name='table_selected']"));
+    initFileTableSelected($('#main-container').find("table[data-name='table_selected_file']"))
+});
+
+
+/**
+ * 执行
+ */
+$('#run_script').click(function () {
+    var data = get_data();
+    var jdata = JSON.stringify(data);
+    var url = '/job/run_fastPushfile/';
+    var index = layer.load();
+    $.post(url, {'data': jdata}, function (res) {
+        var _data = $.parseJSON(res);
+        var msg = _data.msg.join('<br>');
+        ajax_callback1(msg)
+        layer.close(index);
+    });
+});
+
+
+/**
+ * 获取页面填写的信息
+ * @returns
+ */
+function get_data() {
+    var task_name = $('#task_name').val();
+    var account = $('#account').val();
+    var $tableSelected = $('#main-container').find("table[data-name='table_selected']");
+    var server_data = $tableSelected.bootstrapTable('getData');
+    var $tableSelectedFile = $('#main-container').find("table[data-name='table_selected_file']");
+    var files = $tableSelectedFile.bootstrapTable('getData');
+    var fileTargetPath = $('#fileTargetPath').val();
+    var scriptTimeout = $('#scriptTimeout').val();
+
+    var ipList = [];
+    $.each(server_data, function (k, v) {
+        ipList.push(v.ip)
+    });
+    var fileSource = [];
+    $.each(files, function (k, file) {
+        fileSource.push(file)
+    });
+    var data = {
+        'task_name': task_name,
+        'fileSource': fileSource,
+        'fileTargetPath': fileTargetPath,
+        'account': account,
+        'ipList': ipList,
+        'scriptTimeout': scriptTimeout
+    };
+    return data
+}
+</script>
+{% endblock %}

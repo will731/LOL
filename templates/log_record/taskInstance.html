@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load ygol_filter_tag %}
+
+{% block header_content %}
+<style>
+.center {
+ width: auto;
+ display: table;
+ margin-left: auto;
+ margin-right: auto;
+}
+.text-center > table > tbody > tr > th,
+.text-center > table > thead > tr > th {
+ text-align: center;
+}
+
+.table-responsive {
+width: 100%;
+margin-bottom: 15px;
+overflow-x: scroll;
+overflow-y: hidden;
+border: 1px solid #dddddd;
+-ms-overflow-style: -ms-autohiding-scrollbar;
+-webkit-overflow-scrolling: touch;
+}
+.table-responsive > .table {
+margin-bottom: 0;
+}
+.table-responsive > .table > thead > tr > th,
+.table-responsive > .table > tbody > tr > th,
+.table-responsive > .table > tfoot > tr > th,
+.table-responsive > .table > thead > tr > td,
+.table-responsive > .table > tbody > tr > td,
+.table-responsive > .table > tfoot > tr > td {
+white-space: nowrap;
+}
+
+
+.NoNewline
+{
+word-break: keep-all;/*必须*/
+white-space: nowrap;
+}
+
+
+.ace_editor.fullScreen {
+    height: auto !important;
+    width: auto;
+    border: 0;
+    margin: 0;
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+}
+
+.fullScreen {
+    overflow: hidden
+}
+
+.editor {
+    margin: 0;
+    position: relative;
+    height: 400px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.oneline {
+    width:100px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.pointer{
+cursor:pointer;
+}
+</style>
+	<!-- Datepicker -->
+    <link href="/static/template/css/bootstrap-datepicker.min.css" rel="stylesheet"/>
+    <link href="/static/template/css/chosen/chosen.min.css" rel="stylesheet"/>
+    <link href="/static/plugins/guide-step/jquery-step/css/jquery.step.css" rel="stylesheet"/>
+    <link href="/static/plugins/guide-step/css/step.css" rel="stylesheet"/>
+{% endblock %}
+
+
+{% block container %}
+<div id="main-container">
+    <div id="breadcrumb">
+        <ul class="breadcrumb">
+             <li><i class="fa fa-home"></i><a href="/"> Home</a></li>
+             <li>作业执行历史</li>
+             <li class="active">作业实例</li>
+        </ul>
+    </div><!--breadcrumb-->
+
+    <div class="padding-md">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <div class="col-md-4">
+                                    <strong>作业名称： </strong><span id="taskName"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>执行结果： </strong><span id="taskStatus" class="label"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>启动人： </strong><span id="operator"></span>
+                                </div>
+                            </div>
+                        </form>
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <div class="col-md-4">
+                                    <strong>开始时间： </strong><span id="startTime"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>结束时间： </strong><span id="endTime"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>总耗时 (s)： </strong><span id="totalTime"></span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+
+                    <div class="step-body" id="nm_step">
+                        <div class="step-content">
+                            <div class="step-list">
+                                <div class="page-panel-title">
+                                    <h3 class="page-panel-title-left">作业步骤</h3>
+                                </div>
+                                <div class="intro-flow">
+                                </div>
+                                <div class="footer-btn">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div><!-- /panel -->
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+	</div><!-- /padding-md -->
+</div><!-- /main-container -->
+
+<div id="stepTemplate" class="hide">
+    <div class="intro-list">
+        <div class="intro-list-right">
+            <span data-name="blockOrd">1</span>
+            <div class="intro-list-content">
+                <div class="ribbon-wrapper">
+                    <div class="ribbon-inner shadow-pulse">
+                    </div>
+                </div>
+                <div class="panel-heading">
+                    <label>步骤名称：</label>
+                    <span>停止服务</span>
+                </div>
+                <table class="table table-hover table-bordered NoNewline" data-name="table"></table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_content %}
+
+
+<!-- Datepicker -->
+<script src='/static/template/js/bootstrap-datepicker.js'></script>
+<script src='/static/template/js/bootstrap-datepicker.zh-CN.min.js'></script>
+<script src='/static/template/js/chosen.jquery.min.js'></script>
+<script src="/static/plugins/ace/ace.js"></script>
+<script src="/static/plugins/ace/ext-themelist.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/plugins/ace/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/lol.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/plugins/guide-step/jquery-step/js/jquery.step.js" type="text/javascript" charset="utf-8"></script>
+<script>
+$(document).ready(function(){
+    // 在这里写你的代码...
+    var step= $("#nm_step").step({
+        animate:true,
+        initStep:1,
+        speed:1000
+    });
+    loadTaskInstance();
+});
+
+
+
+/**
+ * save new task
+ */
+function loadTaskInstance() {
+    var curl = window.location.href.split('/');
+    var taskInstanceId = curl[curl.length - 2];
+    var data = {'taskInstanceId': taskInstanceId};
+    var url = '/log_record/get_task_instance/';
+    $.ajax({
+        type: "POST",
+        url: url,
+        data: data,
+        success: function (jres) {
+            var res = $.parseJSON(jres);
+            loadData(res)
+        }
+    })
+}
+
+/**
+ * 加载数据
+ */
+function loadData(data) {
+    var nm_task = data.nm_task;
+    var nm_step = data.nm_step;
+    $('#taskName').text(nm_task.name);
+    $('#taskStatus').text(nm_task.status);
+    if (nm_task.status == '执行成功'){
+        $('#taskStatus').addClass('label-success');
+    }
+    else if (nm_task.status == '执行失败') {
+        $('#taskStatus').addClass('label-danger');
+    }
+    else if (nm_task.status == '正在执行'){
+        $('#taskStatus').addClass('label-info');
+        refresh_results();//刷新结果
+    }
+    else{
+        $('#taskStatus').addClass('label-primary');
+    }
+    $('#operator').text(nm_task.operator);
+    $('#startTime').text(nm_task.startTime);
+    $('#endTime').text(nm_task.endTime);
+    $('#totalTime').text(nm_task.totalTime);
+    loadNmStep(nm_step);
+}
+
+/**
+ * 加载步骤
+ */
+function loadNmStep(nm_step) {
+    /* nm_step 步骤集合*/
+    var $introFlow = $('#nm_step').find('.intro-flow');
+    $.each(nm_step, function (k, v) {
+        var $span = $introFlow.find("span:contains("+ v.blockOrd +")[data-name='blockOrd']");
+        if ($span.length==0){//如果没有步骤则添加步骤模板，有则不添加
+            $introFlow.append($('#stepTemplate').html());
+        }
+        var $step = $introFlow.children().last();
+        loadNmStepData($step, v)
+    })
+}
+
+/**
+ * 新增步骤时，加载步骤数据
+ */
+function loadNmStepData($step, v) {
+    $step.find("span[data-name='blockOrd']").text(v.blockOrd);
+    $step.find('.panel-heading').children('span').text(v.blockName);
+    if (v.type==1){/*设置节点类型(1.执行脚本 2.传输文件)*/
+        $step.find('.ribbon-wrapper').children().addClass('bg-success');
+        $step.find('.ribbon-wrapper').children().text('脚本');
+    }
+    else{
+        $step.find('.ribbon-wrapper').children().addClass('bg-info');
+        $step.find('.ribbon-wrapper').children().text('文件');
+    }
+    var $table = $step.find("table[data-name='table']");
+    initOrdTable($table);
+    $table.bootstrapTable('append', v);
+}
+
+
+
+/**
+ * 初始化节点表格
+ */
+function initOrdTable($table) {
+    $table.bootstrapTable({
+        pagination: true,                   //是否显示分页（*）
+        sortable: false,                     //是否启用排序
+        sortOrder: "asc",                   //排序方式
+        showColumns: true,
+        showRefresh: true,
+        clickToSelect: true,
+        uniqueId: "id",
+        sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+        pageNumber: 1,                       //初始化加载第一页，默认第一页
+        pageSize: 5,                       //每页的记录行数（*）
+        pageList: [10, 25, 50, 100],        //可供选择的每页的行数（*）
+        search: true,                  //是否显示搜索 --前端搜索
+        columns:getColumns()
+    });
+}
+
+
+/**
+ * 获取节点表格的标题列columns
+ */
+function getColumns() {
+    var columns =[{
+         field: 'checkbox',
+         checkbox: true
+    },{
+        title: '序号',//标题  可不加
+        formatter: function (value, row, index) {
+            return index+1;
+            }
+    }, {
+        field: 'id',
+        title: 'id',
+        visible: false
+    }, {
+        field: 'name',
+        title: '节点名称'
+    }, {
+        field: 'ipCount',
+        title: '执行主机数'
+    }, {
+        field: 'startTime',
+        title: '开始时间'
+    }, {
+        field: 'endTime',
+        title: '结束时间'
+    }, {
+        field: 'totalTime',
+        title: '总时间(s)'
+    }, {
+        field: 'status',
+        title: '状态',
+        formatter: statusFormatter
+    }, {
+        title: '操作',
+        formatter: operatorFormatter
+    }];
+    return columns
+}
+
+
+/**
+ * 超链接显示执行详情
+ */
+function operatorFormatter(value, row, index) {
+    return [
+        "<div><a href='/log_record/taskStepInstance/"+ row.id +"' data-toggle='modal'"
+        +" class='primary-font login-link'>",
+        '执行详情',
+        '</a></div>'
+    ].join('');
+}
+
+
+/**
+ * 刷新结果
+ */
+function refresh_results(){
+    var intervalId=null;
+    function Countdown(){
+        return function(){
+            var curl = window.location.href.split('/');
+            var taskInstanceId = curl[curl.length - 2];
+            var data = {'taskInstanceId': taskInstanceId};
+            var url = '/log_record/get_task_instance/';
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: data,
+                success: function (jres) {
+                    var res = $.parseJSON(jres);
+                    loadRefreshData(res, intervalId)
+                }
+            });
+        }
+    }
+    intervalId=setInterval(Countdown(),5000);
+}
+
+
+/**
+ * loadRefreshData
+ * 加载刷新的数据
+ */
+function loadRefreshData(data, intervalId){
+    var nm_task = data.nm_task;
+    var nm_step = data.nm_step;
+    console.log(data)
+    loadRefreshNmStep(nm_step);
+    $('#taskStatus').text(nm_task.status);
+    if (nm_task.status == '执行成功'){
+        $('#taskStatus').attr('class', 'label label-success');
+        clearInterval(intervalId);
+    }
+    else if (nm_task.status == '执行失败') {
+        $('#taskStatus').attr('class', 'label label-danger');
+        clearInterval(intervalId);
+    }
+    else if (nm_task.status == '正在执行'){
+        $('#taskStatus').attr('class', 'label label-info');
+    }
+    else{
+        $('#taskStatus').attr('class', 'label label-primary');
+        clearInterval(intervalId);
+    }
+    $('#endTime').text(nm_task.endTime);
+    $('#totalTime').text(nm_task.totalTime);
+}
+
+
+/**
+ * 加载刷新的步骤数据
+ */
+function loadRefreshNmStep(nm_step) {
+    var $introFlow = $('#nm_step').find('.intro-flow');
+    $.each(nm_step, function (k, v) {
+        var $span = $introFlow.find("span:contains("+ v.blockOrd +")[data-name='blockOrd']");
+        if ($span.length==0){//如果没有步骤则添加步骤模板，有则不添加
+            $introFlow.append($('#stepTemplate').html());
+            var $step = $introFlow.children().last();
+            loadNmStepData($step, v);
+        }
+        else {//如果有步骤则刷新数据
+            var $table = $span.next().find("table[data-name='table']");
+            var data = $table.bootstrapTable('getData');
+            //更新状态 true 已更新，false 未更新。未更新代表有增量数据
+            var updateStatus = false;
+            $.each(data, function (index, row) {
+                if (row.id == v.id){
+                    $table.bootstrapTable('updateRow', {index:index, row:v});
+                    updateStatus = true;
+                }
+            });
+            if (updateStatus==false){//添加新数据
+                $table.bootstrapTable('append', v)
+            }
+        }
+    })
+}
+</script>
+{% endblock %}
